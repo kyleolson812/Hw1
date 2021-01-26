@@ -36,7 +36,75 @@ while(!feof(ifp){
     stack [sp] = instruction->m;
     break;
   case 2: //OPR
-  
+      switch (instruction->m)
+          // RET
+        case 0:
+	        stack[bp - 1] = stack[sp];
+	        sp = bp - 1;
+	        bp = stack[sp + 2];
+	        pc = stack[sp + 3];
+	        break;
+          // NEG
+        case 1:
+	        stack[sp] *= - 1;
+	        break;
+          // ADD
+        case 2:
+        	sp -= 1;
+        	stack[sp] += stack[sp + 1];
+        	break;
+          // SUB
+        case 3:
+        	sp -= 1;
+        	stack[sp] -= stack[sp + 1];
+        	break;
+          // MUL
+        case 4:
+	        sp -= 1;
+	        stack[sp] *= stack[sp + 1];
+	        break;
+          // DIV
+        case 5:
+	        sp -= 1;
+	        stack[sp] /= stack[sp + 1];
+        	break;
+          // ODD
+        case 6:
+	        stack[sp] %= 2;
+        	break;
+          // MOD
+        case 7:
+	        sp =- 1;
+	        stack[sp] %= stack[sp + 1];
+          break;
+          // EQL
+        case 8:
+        	sp -= 1;
+        	stack[sp] = (stack[sp] == stack[sp + 1]) ? 1 : 0;
+          break;
+          // NEQ
+        case 9:
+        	sp -= 1;
+        	stack[sp] = (stack[sp] != stack[sp + 1]) ? 1 : 0;
+          break;
+          // LSS
+        case 10:
+	        sp -= 1;
+	        stack[sp] = (stack[sp] < stack[sp + 1]) ? 1 : 0;
+          break;
+          // LEQ
+        case 11:
+	        sp -= 1;
+	        stack[sp] = (stack[sp] <= stack[sp + 1]) ? 1 : 0;
+          // GTR
+        case 12:
+	        sp -= 1;
+	        stack[sp] = (stack[sp] > stack[sp + 1]) ? 1 : 0;
+          // GEQ
+        case 13:
+	        sp -= 1;
+	        stack[sp] = (stack[sp] >= stack[sp + 1]) ? 1 : 0;
+          break;
   case 3: //LOD
     *sp += 1;
     stack[sp] = stack[base(stack, l, bp) + m];
