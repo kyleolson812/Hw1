@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 #define MAX_STACK_HEIGHT 50
 #define MAX_CODE_LENGTH 100
@@ -12,6 +13,7 @@ int base(int stack[], int level, int BP);
 typedef struct instruction
 {
 	int opcode;
+	char op[4];
 	int l;
 	int m;
 } instruction;
@@ -20,15 +22,18 @@ int main(int argc, char *argv[])
 {
 	// Initialize variables.
 	int i;
+
+	int size = 0;
 	int halt = 1;
 	int SP = -1;
 	int BP = 0;
 	int PC = 0;
-	instruction IR;
+	int instructNum;
 	char *str;
-
+	instruction IR;
 
 	// Initialize the arrays to their correct size.
+	bool *lex = malloc(sizeof(bool) * MAX_STACK_HEIGHT);
 	int *stack = malloc(sizeof(int) * MAX_STACK_HEIGHT);
 	instruction *text = malloc(sizeof(instruction) * MAX_CODE_LENGTH);
 
@@ -39,37 +44,31 @@ int main(int argc, char *argv[])
 	for (i = 0; !feof(ifp); i++)
 		fscanf(ifp, "%d %d %d", &text[i].opcode, &text[i].l, &text[i].m);
 
-	for(i = 0; i < MAX_CODE_LENGTH - 1; i++)
-		printf("%d %d %d\n", text[i].opcode, text[i].l, text[i].m);
-	
-	for (i = 0; i < 50; i++)
-		if (&text[i] == NULL)
-		{
-			printf("ERROR AT INDEX %d\n", i);
-
-		}
-
 	// Print initial values.
-	printf("				PC 	BP 	SP 	stack\n");
-	printf("Initial values:	0	0	-1\n");
+	printf("		PC 	BP 	SP 	stack\n");
+	printf("Initial values:	%d	%d	%d\n", PC, BP, SP);
 
 	// Loop through and execute each IR until the halt is called.
 	while(halt == 1)
 	{
 		// Set the IR to the correct IR in the struct array
 		// and increment PC.
+		instructNum = PC;
 		IR = text[PC];
 		PC += 1;
 
-		// Use a switch statement to
+		// Use a switch statement to execute correct instruction
   		switch(IR.opcode)
   		{
-  			//LIT
+  			// LIT
  			case 1:
 				SP += 1;
     			stack[SP] = IR.m;
+    			strcpy(IR.op, "LIT");
+    			size++;
     			break;
-			case 2: //OPR
+    		// OPR
+			case 2:
 				switch (IR.m)
 				{
 					// RET
@@ -78,121 +77,196 @@ int main(int argc, char *argv[])
 						SP = BP - 1;
 						BP = stack[SP + 2];
 						PC = stack[SP + 3];
+						for (i = MAX_STACK_HEIGHT; i >= 0; i--)
+						{
+							if (lex[i] == true)
+							{
+								lex[i] = false;
+								size = i;
+							}
+						}
+						strcpy(IR.op, "RET");
 						break;
 					// NEG
 					case 1:
 						stack[SP] *= - 1;
+						strcpy(IR.op, "NEG");
 						break;
 					// ADD
 					case 2:
 						SP -= 1;
 						stack[SP] += stack[SP + 1];
+						strcpy(IR.op, "ADD");
+						size--;
 						break;
 					// SUB
 					case 3:
 						SP -= 1;
 						stack[SP] -= stack[SP + 1];
+						strcpy(IR.op, "SUB");
+						size--;
 						break;
 					// MUL
 					case 4:
 						SP -= 1;
 						stack[SP] *= stack[SP + 1];
+						strcpy(IR.op, "MUL");
+						size--;
 						break;
 					// DIV
 					case 5:
 						SP -= 1;
 						stack[SP] /= stack[SP + 1];
+						strcpy(IR.op, "DIV");
+						size--;
 						break;
 					// ODD
 					case 6:
 						stack[SP] %= 2;
+						strcpy(IR.op, "ODD");
+						size--;
 						break;
 					// MOD
 					case 7:
 						SP =- 1;
 						stack[SP] %= stack[SP + 1];
+						strcpy(IR.op, "MOD");
+						size--;
+						break;
 					// EQL
 					case 8:
 						SP -= 1;
 						stack[SP] = (stack[SP] == stack[SP + 1]) ? 1 : 0;
+						strcpy(IR.op, "EQL");
+						size--;
+						break;
 					// NEQ
 					case 9:
 						SP -= 1;
 						stack[SP] = (stack[SP] != stack[SP + 1]) ? 1 : 0;
+						strcpy(IR.op, "NEQ");
+						size--;
+						break;
 					// LSS
 					case 10:
 						SP -= 1;
 						stack[SP] = (stack[SP] < stack[SP + 1]) ? 1 : 0;
+						strcpy(IR.op, "LSS");
+						size--;
+						break;
 					// LEQ
 					case 11:
 						SP -= 1;
 						stack[SP] = (stack[SP] <= stack[SP + 1]) ? 1 : 0;
+						strcpy(IR.op, "LEQ");
+						size--;
+						break;
 					// GTR
 					case 12:
 						SP -= 1;
 						stack[SP] = (stack[SP] > stack[SP + 1]) ? 1 : 0;
+						strcpy(IR.op, "GTR");
+						size--;
+						break;
 					// GEQ
 					case 13:
 						SP -= 1;
 						stack[SP] = (stack[SP] >= stack[SP + 1]) ? 1 : 0;
+						strcpy(IR.op, "GEQ");
+						size--;
+						break;
 				}
-			case 3: //LOD
+				break;
+			// LOD
+			case 3:
 				SP += 1;
 				stack[SP] = stack[base(stack, IR.l, BP) + IR.m];
+				strcpy(IR.op, "LOD");
+				size++;
 				break;
-			case 4: //STO
+			// STO
+			case 4:
 				stack[base(stack, IR.l, BP) + IR.m] = stack[SP];
-				SP -= 1; 
+				SP -= 1;
+				strcpy(IR.op, "STO");
+				size--;
 				break;
-			case 5: //CAL
-				stack[SP += 1] = base(stack, IR.l, BP);
-				stack[SP += 2] = BP;
-				stack[SP += 3] = PC;
-				stack[SP += 4] = stack[SP];
-				BP = SP += 1;
+			// CAL
+			case 5:
+				stack[SP + 1] = base(stack, IR.l, BP);
+				stack[SP + 2] = BP;
+				stack[SP + 3] = PC;
+				stack[SP + 4] = stack[SP];
+				BP = SP + 1;
 				PC = IR.m;
+				lex[size] = true;
+				strcpy(IR.op, "CAL");
 				break;
-			case 6: //INC
+			// INC
+			case 6:
 				SP = SP + IR.m;
+				strcpy(IR.op, "INC");
+				size += IR.m;
 				break;
-			case 7: //JmP
+			// JMP
+			case 7:
 				PC = IR.m;
-			case 8: //JPC
+				strcpy(IR.op, "JMP");
+				break;
+			// JPC
+			case 8:
 				if(stack[SP] == 0)
 				{
 					PC = IR.m;
 				}
 				SP -= 1;
-			case 9: //SYS
+				strcpy(IR.op, "JPC");
+				size--;
+				break;
+			// SYS
+			case 9:
 				if (IR.m == 1)
 				{
-					printf("%d", stack[SP]);
+					printf("Top of Stack Value: %d\n", stack[SP]);
     				SP -= 1;
+    				size--;
 				}
 				else if (IR.m == 2)
 				{
 					SP += 1;
+					printf("Please Enter an Integer: ");
 					scanf("%d", &stack[SP]);
+					size++;
 				}
 				else if (IR.m == 3)
 					halt = 0;
+				strcpy(IR.op, "SYS");
 				break;
 		}
-		// insert some for loop that loops and prints each stack value until
-		// it reaches a NULL value.
+		
+		// Print current values after instruction execute.
+		printf(" %d %s %d %d 	%d 	%d 	%d 	",
+			instructNum, IR.op, IR.l, IR.m, PC, BP, SP);
+
+		// Loop through and print each stack value.
+		// Print a '|' between activation records.
+		for (i = 0; i < size; i++)
+		{
+			if (lex[i] == true)
+				printf(" | ");
+			printf("%d ", stack[i]);
+		}
+
+		// Print a newline character at the very end.
+		printf("\n");
 	}
 
-	printf("WE HIT A HALT CASE LADS IT WORKS!!!\n");
+	// Close the file and return.
 	fclose(ifp);
 	return 0;
 }
 
-
-
-
-
-
-
+// Implement given base() function.
 int base(int stack[], int level, int BP)
 {
 	int base = BP;
