@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
 			case 2:
 				switch (IR.m)
 				{
-					// RET
+					// RTN
 					case 0:
 						stack[BP - 1] = stack[SP];
 						SP = BP - 1;
@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
 								size = i;
 							}
 						}
-						strcpy(IR.op, "RET");
+						strcpy(IR.op, "RTN");
 						break;
 					// NEG
 					case 1:
@@ -236,6 +236,7 @@ int main(int argc, char *argv[])
 					SP += 1;
 					printf("Please Enter an Integer: ");
 					scanf("%d", &stack[SP]);
+					printf("\n");
 					size++;
 				}
 				else if (IR.m == 3)
